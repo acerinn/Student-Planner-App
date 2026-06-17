@@ -56,7 +56,7 @@ final GoRouter _router = GoRouter(
       path: '/edit-profile',
       builder: (context, state) {
         final data = state.extra as Map<String, dynamic>? ?? {};
-        return EditProfileScreen(currentData: data);
+        return EditProfileScreen(userData: data);
       },
     ),
     GoRoute(

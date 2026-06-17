@@ -20,16 +20,22 @@ class NotesProvider with ChangeNotifier {
   }
 
   // Add a new note
+ // Update your addNote in NotesProvider
   Future<void> addNote(String subject, String content) async {
     try {
-      DocumentReference docRef = await _firestore.collection('notes').add({
+      final docRef = await _firestore.collection('notes').add({
         'subject': subject,
         'content': content,
       });
       
+      // Create the object
       NoteModel newNote = NoteModel(noteId: docRef.id, subject: subject, content: content);
+      
+      // Update the local list
       _notes.add(newNote);
-      notifyListeners();
+      
+      // Force notify
+      notifyListeners(); 
     } catch (e) {
       print("Error adding note: $e");
     }

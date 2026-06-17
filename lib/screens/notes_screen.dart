@@ -2,24 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/notes_provider.dart';
-import '../widgets/animated_background.dart'; // Import the background!
+import '../widgets/animated_background.dart';
 
-class NotesScreen extends StatelessWidget {
+class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
 
   @override
+  State<NotesScreen> createState() => _NotesScreenState();
+}
+
+class _NotesScreenState extends State<NotesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // This triggers the fetch automatically when the screen is first built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<NotesProvider>(context, listen: false).fetchNotes();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 1. Wrap the ENTIRE screen in the Animated Background
     return AnimatedBackground(
       child: Scaffold(
-        // 2. Make the Scaffold and AppBar completely transparent
         backgroundColor: Colors.transparent,
         
         appBar: AppBar(
           title: const Text('Study Notes', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black87), // Makes icons dark
+          iconTheme: const IconThemeData(color: Colors.black87),
           actions: [
             IconButton(
               icon: const Icon(Icons.search),
@@ -34,6 +46,7 @@ class NotesScreen extends StatelessWidget {
         
         body: Consumer<NotesProvider>(
           builder: (context, notesProvider, child) {
+            // Check if notes are empty - you might want to show a loading spinner here if still fetching
             if (notesProvider.notes.isEmpty) {
               return const Center(child: Text('No notes yet. Add one!', style: TextStyle(color: Colors.black54)));
             }
@@ -42,9 +55,8 @@ class NotesScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final note = notesProvider.notes[index];
                 
-                // 3. Frosted Glass Effect for Note Cards
                 return Card(
-                  color: Colors.white.withOpacity(0.6), // Translucent white glass
+                  color: Colors.white.withOpacity(0.6),
                   elevation: 0,
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -75,14 +87,13 @@ class NotesScreen extends StatelessWidget {
           child: const Icon(Icons.add, color: Colors.white),
         ),
         
-        // 4. Transparent Bottom Navigation Bar
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
           currentIndex: 2, 
           selectedItemColor: Colors.blueAccent,
-          unselectedItemColor: Colors.black38, // Darker unselected icons
+          unselectedItemColor: Colors.black38,
           onTap: (index) {
             if (index == 0) context.go('/dashboard');
             if (index == 1) context.go('/tasks');

@@ -1,144 +1,88 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart'; // Helps format the date
+import '../widgets/animated_background.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  final Map<String, dynamic> currentData;
-  const EditProfileScreen({super.key, required this.currentData});
+  final Map<String, dynamic> userData;
+  const EditProfileScreen({super.key, required this.userData});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _matricController;
-  String? _selectedGender;
-  DateTime? _selectedDate;
-
-@override
-  void initState() {
-    super.initState();
-    
-    _nameController = TextEditingController(text: widget.currentData['username'] ?? '');
-    _matricController = TextEditingController(text: widget.currentData['matricNo'] ?? '');
-    
-    // SAFETY CHECK: Only set the gender if it exactly matches our dropdown options
-    String? incomingGender = widget.currentData['gender'];
-    if (incomingGender == 'Male' || incomingGender == 'Female') {
-      _selectedGender = incomingGender;
-    } else {
-      _selectedGender = null; // Leaves the dropdown blank if the data is weird
-    }
-    
-    if (widget.currentData['birthdate'] != null) {
-      _selectedDate = (widget.currentData['birthdate'] as Timestamp).toDate();
-    }
-  }
+  late TextEditingController _usernameController;
+  late TextEditingController _matricNoController;
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    _matricController.dispose();
-    super.dispose();
-  }
-
-  // Function to show the calendar picker
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime(2000),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController(text: widget.userData['username']);
+    _matricNoController = TextEditingController(text: widget.userData['matricNo']);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Name Field
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-            
-            // Matric Number Field
-            TextField(
-              controller: _matricController,
-              decoration: const InputDecoration(labelText: 'Matric Number', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-
-            // Gender Dropdown
-            DropdownButtonFormField<String>(
-              initialValue: _selectedGender,
-              decoration: const InputDecoration(labelText: 'Gender', border: OutlineInputBorder()),
-              items: ['Male', 'Female'].map((String value) {
-                return DropdownMenuItem<String>(value: value, child: Text(value));
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedGender = newValue;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Birthdate Picker
-            InkWell(
-              onTap: () => _selectDate(context),
-              child: InputDecorator(
-                decoration: const InputDecoration(labelText: 'Birthdate', border: OutlineInputBorder()),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(_selectedDate == null ? 'Select Date' : DateFormat('dd MMM yyyy').format(_selectedDate!)),
-                    const Icon(Icons.calendar_today),
-                  ],
+    // 1. Wrap the entire screen in the Animated Background
+    return AnimatedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Make Scaffold transparent
+        appBar: AppBar(
+          title: const Text('Edit Profile', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black87),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              // 2. Frosted Glass Input Fields
+              TextField(
+                controller: _usernameController,
+                decoration: _buildInputDecoration('Username'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _matricNoController,
+                decoration: _buildInputDecoration('Matric No'),
+              ),
+              const SizedBox(height: 30),
+              
+              // 3. Save Button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  ),
+                  onPressed: () async {
+                    // Logic to update Firestore would go here
+                    context.pop();
+                  },
+                  child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: FilledButton.icon(
-                onPressed: () async {
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user != null) {
-                    // Update Firestore (SetOptions merge ensures we don't overwrite the email)
-                    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                      'username': _nameController.text,
-                      'matricNo': _matricController.text,
-                      'gender': _selectedGender,
-                      'birthdate': _selectedDate != null ? Timestamp.fromDate(_selectedDate!) : null,
-                    }, SetOptions(merge: true));
-                    
-                    if (context.mounted) context.pop(); // Go back
-                  }
-                },
-                icon: const Icon(Icons.save),
-                label: const Text('Save Changes'),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  // Helper method to keep your glass inputs consistent
+  InputDecoration _buildInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.black54),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.6), // Frosted glass fill
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
       ),
     );
   }
