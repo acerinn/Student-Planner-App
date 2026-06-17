@@ -25,9 +25,15 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -41,46 +47,28 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAG-fegc2X2_68ymHnlhSTpqSvf8vCMZMs',
-    appId: '1:212536936154:web:c07c53d77955f7c64b07e3',
-    messagingSenderId: '212536936154',
-    projectId: 'student-planner-app-2026-942bd',
-    authDomain: 'student-planner-app-2026-942bd.firebaseapp.com',
-    storageBucket: 'student-planner-app-2026-942bd.firebasestorage.app',
+    apiKey: 'AIzaSyBb_OMDIGG0BD9NRWv6EyGECfh_g--maF4',
+    appId: '1:1028720840314:web:9cf28e2f70ba3280c335c3',
+    messagingSenderId: '1028720840314',
+    projectId: 'studentplanner-3ef3a',
+    authDomain: 'studentplanner-3ef3a.firebaseapp.com',
+    storageBucket: 'studentplanner-3ef3a.firebasestorage.app',
+    measurementId: 'G-E8Y0CND6WL',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAU9Ko3U72bh0_JEkLTcERabbLOBB7O4VI',
-    appId: '1:212536936154:android:aab627202b7fde904b07e3',
-    messagingSenderId: '212536936154',
-    projectId: 'student-planner-app-2026-942bd',
-    storageBucket: 'student-planner-app-2026-942bd.firebasestorage.app',
+    apiKey: 'AIzaSyCgKxoOYjp9A0wIim8U3J1jDUJ0KJweIhw',
+    appId: '1:1028720840314:android:a2bda2e5347143c9c335c3',
+    messagingSenderId: '1028720840314',
+    projectId: 'studentplanner-3ef3a',
+    storageBucket: 'studentplanner-3ef3a.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyA0gsSz_r3Zmym4cjHT2aQneqBIvQbrqsI',
-    appId: '1:212536936154:ios:b06cd90955ddb1ea4b07e3',
-    messagingSenderId: '212536936154',
-    projectId: 'student-planner-app-2026-942bd',
-    storageBucket: 'student-planner-app-2026-942bd.firebasestorage.app',
-    iosBundleId: 'com.example.studentPlannerApp',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyA0gsSz_r3Zmym4cjHT2aQneqBIvQbrqsI',
-    appId: '1:212536936154:ios:b06cd90955ddb1ea4b07e3',
-    messagingSenderId: '212536936154',
-    projectId: 'student-planner-app-2026-942bd',
-    storageBucket: 'student-planner-app-2026-942bd.firebasestorage.app',
-    iosBundleId: 'com.example.studentPlannerApp',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAG-fegc2X2_68ymHnlhSTpqSvf8vCMZMs',
-    appId: '1:212536936154:web:6ba3e79d084db7564b07e3',
-    messagingSenderId: '212536936154',
-    projectId: 'student-planner-app-2026-942bd',
-    authDomain: 'student-planner-app-2026-942bd.firebaseapp.com',
-    storageBucket: 'student-planner-app-2026-942bd.firebasestorage.app',
+    apiKey: 'AIzaSyBq_kS4pDgWDNTwvQALJxjXrHfK3nggLa8',
+    appId: '1:1028720840314:ios:236e24c15ecf6d89c335c3',
+    messagingSenderId: '1028720840314',
+    projectId: 'studentplanner-3ef3a',
+    storageBucket: 'studentplanner-3ef3a.firebasestorage.app',
+    iosBundleId: 'com.example.studentPlanner',
   );
 }
