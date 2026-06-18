@@ -257,27 +257,47 @@ Used for:
 
 ```plaintext
 lib/
+├── auth/
+│   └── auth_service.dart
 ├── models/
+│   ├── assignment_model.dart
+│   ├── note_model.dart
+│   └── timetable_model.dart
 ├── providers/
-├── services/
+│   ├── assignments_provider.dart
+│   ├── dashboard_provider.dart
+│   ├── dashboard_screen.dart
+│   ├── notes_provider.dart
+│   └── timetables_provider.dart
 ├── screens/
+│   ├── add_note_screen.dart
+│   ├── assignments_screen.dart
+│   ├── dashboard_screen.dart
+│   ├── edit_note_screen.dart
+│   ├── edit_profile_screen.dart
+│   ├── login_page.dart
+│   ├── notes_screen.dart
+│   ├── profile_screen.dart
+│   ├── register_page.dart
+│   ├── timetable_editor_screen.dart
+│   └── timetable_screen.dart
 ├── widgets/
-├── utils/
-└── routes/
-├── main.dart
+│   └── animated_background.dart
+├── firebase_options.dart
+└── main.dart
 ```
 
 ### Folder Description
 
-| Folder    | Function                   |
-| --------- | -------------------------- |
-| models    | Data models/classes        |
-| providers | State management classes   |
-| services  | Firebase and API services  |
-| screens   | Application pages/screens  |
-| widgets   | Reusable UI components     |
-| utils     | Helper functions/utilities |
-| routes    | Navigation configuration   |
+| Folder | Function |
+| --- | --- |
+| auth | Authentication and Firebase sign-in logic |
+| models | Data models for assignments, notes, and timetables |
+| providers | State management and app data controllers |
+| screens | Main application pages and feature screens |
+| widgets | Reusable UI components |
+| firebase_options.dart | Generated Firebase configuration for the app |
+| main.dart | App entry point and top-level setup |
 
 ---
 
