@@ -1,30 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/dashboard_provider.dart';
-import '../providers/notes_provider.dart';
-import '../widgets/animated_background.dart'; // 1. IMPORT THE CUSTOM BACKGROUND!
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-class DashboardScreen extends StatelessWidget {
+import '../providers/assignments_provider.dart';
+import '../providers/notes_provider.dart';
+import '../widgets/animated_background.dart';
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final dashboardWatch = context.watch<DashboardProvider>();
-    final notesWatch = context.watch<NotesProvider>(); 
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
 
-    // 2. WRAP THE ENTIRE SCREEN IN YOUR TEAMMATE'S ANIMATED BACKGROUND
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AssignmentsProvider>().fetchAssignments();
+      context.read<NotesProvider>().fetchNotes();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final assignmentsWatch = context.watch<AssignmentsProvider>();
+    final notesWatch = context.watch<NotesProvider>();
+
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final upcomingAssignments = assignmentsWatch.assignments
+        .where((assignment) => !assignment.dueDate.isBefore(startOfToday))
+        .toList()
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
+    final dueSoonCount = upcomingAssignments
+        .where((assignment) => assignment.dueDate.difference(startOfToday).inDays <= 7)
+        .length;
+
+    final totalAssignments = assignmentsWatch.assignments.length;
+    final assignmentsDueSoonProgress = totalAssignments == 0
+        ? 0.0
+        : (dueSoonCount / totalAssignments).clamp(0.0, 1.0);
+
     return AnimatedBackground(
       child: Scaffold(
-        backgroundColor: Colors.transparent, // Let the animation show through
-        
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('StudySync Dashboard', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+          title: const Text(
+            'StudySync Dashboard',
+            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: false,
         ),
-        
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -32,18 +64,20 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Text(
                 'Welcome Back!',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Track your assignments and keep up with academic goals.',
-                style: TextStyle(color: Colors.black54), 
+                style: TextStyle(color: Colors.black54),
               ),
               const SizedBox(height: 20),
-
               Card(
                 elevation: 0,
-                color: Colors.white.withOpacity(0.6), // Matched to NotesScreen card opacity
+                color: Colors.white.withOpacity(0.6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -51,7 +85,7 @@ class DashboardScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Academic Progress Tracker',
+                        'Assignment Overview',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                       const SizedBox(height: 12),
@@ -59,18 +93,18 @@ class DashboardScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Productivity Metric: ${(dashboardWatch.productivityProgress * 100).toStringAsFixed(0)}%',
+                            '$dueSoonCount Due In 7 Days',
                             style: const TextStyle(color: Colors.black87),
                           ),
                           Text(
-                            '${dashboardWatch.completedTasks} Tasks Done',
+                            '$totalAssignments Total',
                             style: const TextStyle(color: Colors.black87),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       LinearProgressIndicator(
-                        value: dashboardWatch.productivityProgress,
+                        value: assignmentsDueSoonProgress,
                         backgroundColor: Colors.white54,
                         color: Colors.blueAccent,
                         minHeight: 10,
@@ -81,8 +115,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
-              Text('Quick Overview', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87)),
+              Text(
+                'Quick Overview',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
+              ),
               const SizedBox(height: 12),
               GridView.count(
                 crossAxisCount: 2,
@@ -94,35 +130,42 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   _buildSummaryCard(
                     context,
-                    title: 'Pending Tasks',
-                    value: '${dashboardWatch.pendingTasks}',
-                    icon: Icons.assignment_late,
+                    title: 'Total Assignments',
+                    value: '$totalAssignments',
+                    icon: Icons.assignment,
                     color: Colors.orange,
                   ),
                   _buildSummaryCard(
                     context,
                     title: 'Total Notes Saved',
-                    value: '${notesWatch.notes.length}', // REAL DATA FROM NOTES!
+                    value: '${notesWatch.notes.length}',
                     icon: Icons.book,
-                    color: Colors.blueAccent, 
+                    color: Colors.blueAccent,
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-
-              Text('Core Application Modules', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87)),
+              Text(
+                'Core Application Modules',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
+              ),
               const SizedBox(height: 12),
-              
               Card(
                 elevation: 0,
                 color: Colors.white.withOpacity(0.6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 child: ListTile(
                   leading: const Icon(Icons.assignment, color: Colors.blueAccent),
-                  title: const Text('Assignment Task Tracker', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
-                  subtitle: const Text('Manage workloads and deadlines', style: TextStyle(color: Colors.black54)),
+                  title: const Text(
+                    'Assignment Tracker',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  subtitle: const Text(
+                    'Manage assignment names and due dates',
+                    style: TextStyle(color: Colors.black54),
+                  ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.black54),
-                  onTap: () => context.push('/tasks'),
+                  onTap: () => context.push('/assignments'),
                 ),
               ),
               const SizedBox(height: 8),
@@ -132,33 +175,74 @@ class DashboardScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 child: ListTile(
                   leading: const Icon(Icons.note_alt, color: Colors.blueAccent),
-                  title: const Text('Notes Repository', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
-                  subtitle: const Text('Review your subject study notes', style: TextStyle(color: Colors.black54)),
+                  title: const Text(
+                    'Notes Repository',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  subtitle: const Text(
+                    'Review your subject study notes',
+                    style: TextStyle(color: Colors.black54),
+                  ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.black54),
                   onTap: () => context.push('/notes'),
                 ),
               ),
+              const SizedBox(height: 24),
+              Text(
+                'Upcoming Assignments',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 0,
+                color: Colors.white.withOpacity(0.6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                child: upcomingAssignments.isEmpty
+                    ? const ListTile(
+                        title: Text(
+                          'No upcoming assignments',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        subtitle: Text(
+                          'Add assignments to see them here.',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      )
+                    : Column(
+                        children: upcomingAssignments.take(3).map((assignment) {
+                          return ListTile(
+                            leading: const Icon(Icons.event_note, color: Colors.blueAccent),
+                            title: Text(
+                              assignment.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                            ),
+                            subtitle: Text(
+                              'Due: ${DateFormat('dd MMM yyyy').format(assignment.dueDate)}',
+                              style: const TextStyle(color: Colors.black54),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+              ),
             ],
           ),
         ),
-        
-        // 3. SYNCED NAVIGATION BAR STYLE
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
-          currentIndex: 0, // Dashboard is index 0
+          currentIndex: 0,
           selectedItemColor: Colors.blueAccent,
           unselectedItemColor: Colors.black38,
           onTap: (index) {
-            if (index == 0) return; // Already on dashboard
-            if (index == 1) context.go('/tasks');
+            if (index == 0) return;
+            if (index == 1) context.go('/assignments');
             if (index == 2) context.go('/notes');
             if (index == 3) context.go('/profile');
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Tasks'),
+            BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Assignments'),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Notes'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
@@ -167,10 +251,11 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCard(BuildContext context, {
-    required String title, 
-    required String value, 
-    required IconData icon, 
+  Widget _buildSummaryCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
     required Color color,
   }) {
     return Card(
@@ -185,7 +270,11 @@ class DashboardScreen extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 28),
             Text(title, style: const TextStyle(color: Colors.black54, fontSize: 12)),
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87), overflow: TextOverflow.ellipsis),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),

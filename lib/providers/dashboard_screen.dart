@@ -119,10 +119,10 @@ class DashboardScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 child: ListTile(
                   leading: const Icon(Icons.assignment, color: Colors.blueAccent),
-                  title: const Text('Assignment Task Tracker', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                  title: const Text('Assignment Tracker', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                   subtitle: const Text('Manage workloads and deadlines', style: TextStyle(color: Colors.black54)),
                   trailing: const Icon(Icons.chevron_right, color: Colors.black54),
-                  onTap: () => context.push('/tasks'),
+                  onTap: () => context.push('/assignments'),
                 ),
               ),
               const SizedBox(height: 8),
@@ -152,13 +152,13 @@ class DashboardScreen extends StatelessWidget {
           unselectedItemColor: Colors.black38,
           onTap: (index) {
             if (index == 0) return; // Already on dashboard
-            if (index == 1) context.go('/tasks');
+            if (index == 1) context.go('/assignments');
             if (index == 2) context.go('/notes');
             if (index == 3) context.go('/profile');
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Tasks'),
+            BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Assignments'),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Notes'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],

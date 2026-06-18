@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import 'firebase_options.dart'; 
+import 'models/note_model.dart';
 import 'providers/notes_provider.dart';
 import 'providers/dashboard_provider.dart';
+import 'providers/assignments_provider.dart';
 
 // --- Screens ---
 import 'screens/notes_screen.dart';
@@ -14,10 +16,10 @@ import 'screens/add_note_screen.dart';
 import 'screens/edit_note_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/assignments_screen.dart';
 // Add your teammate's screens:
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
-import 'models/note_model.dart';
 
 void main() async {
   // 1. Ensure Flutter bindings are ready before initializing Firebase
@@ -79,8 +81,8 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const DashboardScreen(),
     ),
     GoRoute(
-      path: '/tasks',
-      builder: (context, state) => const Scaffold(body: Center(child: Text('Tasks Placeholder'))),
+      path: '/assignments',
+      builder: (context, state) => const AssignmentsScreen(),
     ),
   ],
 );
@@ -95,6 +97,7 @@ class StudySyncApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => AssignmentsProvider()),
         // Add more providers here as your teammates finish their parts
       ],
       child: MaterialApp.router(

@@ -111,13 +111,13 @@ class _NotesScreenState extends State<NotesScreen> {
           unselectedItemColor: Colors.black38,
           onTap: (index) {
             if (index == 0) context.go('/dashboard');
-            if (index == 1) context.go('/tasks');
+            if (index == 1) context.go('/assignments');
             if (index == 2) return;
             if (index == 3) context.go('/profile');
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Tasks'),
+            BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Assignments'),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Notes'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],

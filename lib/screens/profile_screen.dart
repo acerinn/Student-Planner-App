@@ -123,13 +123,13 @@ class ProfileScreen extends StatelessWidget {
         unselectedItemColor: Colors.black38, // Darkened so they show up on the gradient
         onTap: (index) {
           if (index == 0) context.go('/dashboard');
-          if (index == 1) context.go('/tasks');
+          if (index == 1) context.go('/assignments');
           if (index == 2) context.go('/notes');
           if (index == 3) return;
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Tasks'),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment_turned_in), label: 'Assignments'),
           BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Notes'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
