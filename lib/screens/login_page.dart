@@ -62,8 +62,7 @@ class _LoginPageState extends State<LoginPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login Success")),
       );
-      // SEND THE USER TO YOUR NOTES APP!
-      if (context.mounted) context.go('/notes'); 
+      if (context.mounted) context.go('/dashboard'); 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login Failed")),

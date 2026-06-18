@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../models/timetable_model.dart';
 import '../providers/assignments_provider.dart';
+import '../providers/timetables_provider.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/animated_background.dart';
 
@@ -27,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final assignmentsWatch = context.watch<AssignmentsProvider>();
+    final timetablesWatch = context.watch<TimetablesProvider>();
     final notesWatch = context.watch<NotesProvider>();
 
     final today = DateTime.now();
@@ -115,6 +118,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+
+              Text(
+                'Timetable',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 0,
+                color: Colors.white.withOpacity(0.6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        timetablesWatch.pinnedTimetable?.title ?? 'No timetable pinned yet.',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        timetablesWatch.pinnedTimetable == null
+                            ? 'Create a timetable and pin it from the timetable page.'
+                            : 'Pinned timetable for dashboard display',
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 12),
+                      if (timetablesWatch.pinnedTimetable != null)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Table(
+                            border: TableBorder.all(color: Colors.black12),
+                            defaultColumnWidth: const IntrinsicColumnWidth(),
+                            children: [
+                              TableRow(
+                                decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.08)),
+                                children: [
+                                  _buildTableHeaderCell('Day'),
+                                  ...timetableSlots.map((slot) => _buildTableHeaderCell(slot.label)),
+                                ],
+                              ),
+                              ...timetableDays.map((day) {
+                                final daySchedule = timetablesWatch.pinnedTimetable!.schedule[day] ?? {};
+                                return TableRow(
+                                  children: [
+                                    _buildTableBodyCell(day, isHeader: true),
+                                    ...timetableSlots.map((slot) {
+                                      final cell = daySchedule[slot.key];
+                                      final text = cell == null || (cell.name.isEmpty && cell.venue.isEmpty)
+                                          ? '-'
+                                          : cell.venue.isEmpty
+                                              ? cell.name
+                                              : '${cell.name}\n${cell.venue}';
+                                      return _buildTableBodyCell(text);
+                                    }),
+                                  ],
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: () => context.push('/timetable'),
+                          icon: const Icon(Icons.edit_calendar),
+                          label: const Text('Edit Timetable'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               Text(
                 'Quick Overview',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
@@ -276,6 +355,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
               overflow: TextOverflow.ellipsis,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeaderCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+      ),
+    );
+  }
+
+  Widget _buildTableBodyCell(String text, {bool isHeader = false}) {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+          color: isHeader ? Colors.black87 : Colors.black54,
+          fontSize: 12,
         ),
       ),
     );

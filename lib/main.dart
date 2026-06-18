@@ -8,6 +8,8 @@ import 'models/note_model.dart';
 import 'providers/notes_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/assignments_provider.dart';
+import 'providers/timetables_provider.dart';
+import 'models/timetable_model.dart';
 
 // --- Screens ---
 import 'screens/notes_screen.dart';
@@ -17,6 +19,8 @@ import 'screens/edit_note_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/assignments_screen.dart';
+import 'screens/timetable_screen.dart';
+import 'screens/timetable_editor_screen.dart';
 // Add your teammate's screens:
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
@@ -84,6 +88,17 @@ final GoRouter _router = GoRouter(
       path: '/assignments',
       builder: (context, state) => const AssignmentsScreen(),
     ),
+    GoRoute(
+      path: '/timetable',
+      builder: (context, state) => const TimetableScreen(),
+    ),
+    GoRoute(
+      path: '/timetable-editor',
+      builder: (context, state) {
+        final timetable = state.extra as TimetableModel?;
+        return TimetableEditorScreen(timetable: timetable);
+      },
+    ),
   ],
 );
 
@@ -98,6 +113,7 @@ class StudySyncApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => AssignmentsProvider()),
+        ChangeNotifierProvider(create: (_) => TimetablesProvider()),
         // Add more providers here as your teammates finish their parts
       ],
       child: MaterialApp.router(
