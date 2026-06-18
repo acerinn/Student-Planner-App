@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'firebase_options.dart'; 
 import 'providers/notes_provider.dart';
+import 'providers/dashboard_provider.dart';
 
 // --- Screens ---
 import 'screens/notes_screen.dart';
@@ -12,6 +13,7 @@ import 'screens/profile_screen.dart';
 import 'screens/add_note_screen.dart';
 import 'screens/edit_note_screen.dart';
 import 'screens/edit_profile_screen.dart';
+import 'screens/dashboard_screen.dart';
 // Add your teammate's screens:
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
@@ -72,10 +74,9 @@ final GoRouter _router = GoRouter(
         return EditNoteScreen(note: note);
       },
     ),
-   
     GoRoute(
       path: '/dashboard',
-      builder: (context, state) => const Scaffold(body: Center(child: Text('Dashboard Placeholder'))),
+      builder: (context, state) => const DashboardScreen(),
     ),
     GoRoute(
       path: '/tasks',
@@ -93,6 +94,7 @@ class StudySyncApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NotesProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
         // Add more providers here as your teammates finish their parts
       ],
       child: MaterialApp.router(
