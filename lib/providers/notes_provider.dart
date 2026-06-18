@@ -5,8 +5,19 @@ import '../models/note_model.dart';
 class NotesProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<NoteModel> _notes = [];
+  String _searchQuery = "";
 
-  List<NoteModel> get notes => _notes;
+  List<NoteModel> get notes {
+    if (_searchQuery.isEmpty) return _notes;
+    return _notes.where((note) =>
+        note.subject.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        note.content.toLowerCase().contains(_searchQuery.toLowerCase())
+    ).toList();
+  }
+  void updateSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
 
   // Fetch notes from Firestore
   Future<void> fetchNotes() async {
