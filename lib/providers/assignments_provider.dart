@@ -1,20 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/assignment_model.dart';
 
 class AssignmentsProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   List<AssignmentModel> _assignments = [];
 
   List<AssignmentModel> get assignments => List.unmodifiable(_assignments);
 
+  CollectionReference<Map<String, dynamic>>? _assignmentsCollection() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return null;
+    return _firestore.collection('users').doc(uid).collection('assignments');
+  }
+
   Future<void> fetchAssignments() async {
+    final assignmentsCollection = _assignmentsCollection();
+    if (assignmentsCollection == null) {
+      _assignments = [];
+      notifyListeners();
+      return;
+    }
+
     try {
-      final snapshot = await _firestore
-          .collection('assignments')
-          .orderBy('dueDate')
-          .get();
+      final snapshot = await assignmentsCollection.orderBy('dueDate').get();
 
       _assignments = snapshot.docs
           .map(
@@ -34,8 +46,11 @@ class AssignmentsProvider with ChangeNotifier {
     required String name,
     required DateTime dueDate,
   }) async {
+    final assignmentsCollection = _assignmentsCollection();
+    if (assignmentsCollection == null) return;
+
     try {
-      final docRef = await _firestore.collection('assignments').add({
+      final docRef = await assignmentsCollection.add({
         'name': name,
         'dueDate': Timestamp.fromDate(dueDate),
       });
@@ -59,8 +74,11 @@ class AssignmentsProvider with ChangeNotifier {
     required String name,
     required DateTime dueDate,
   }) async {
+    final assignmentsCollection = _assignmentsCollection();
+    if (assignmentsCollection == null) return;
+
     try {
-      await _firestore.collection('assignments').doc(assignmentId).update({
+      await assignmentsCollection.doc(assignmentId).update({
         'name': name,
         'dueDate': Timestamp.fromDate(dueDate),
       });
@@ -84,8 +102,11 @@ class AssignmentsProvider with ChangeNotifier {
   }
 
   Future<void> deleteAssignment(String assignmentId) async {
+    final assignmentsCollection = _assignmentsCollection();
+    if (assignmentsCollection == null) return;
+
     try {
-      await _firestore.collection('assignments').doc(assignmentId).delete();
+      await assignmentsCollection.doc(assignmentId).delete();
       _assignments.removeWhere(
         (assignment) => assignment.assignmentId == assignmentId,
       );

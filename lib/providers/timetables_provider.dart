@@ -45,6 +45,13 @@ class TimetablesProvider with ChangeNotifier {
     final timetableCollection = _timelinesCollection();
     final settingsDocument = _settingsDocument();
 
+    if (_auth.currentUser == null) {
+      _timetables = [];
+      _pinnedTimetableId = null;
+      notifyListeners();
+      return;
+    }
+
     if (timetableCollection == null || settingsDocument == null) return;
 
     try {
