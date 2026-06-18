@@ -31,20 +31,32 @@ class _NotesScreenState extends State<NotesScreen> {
           title: const Text('Study Notes', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black87),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Search feature coming soon!')),
-                );
-              },
-            ),
-          ],
+         
         ),
-        
-        body: Consumer<NotesProvider>(
+       body: Column(
+          children: [
+            // 1. ADD SEARCH BAR HERE
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                  style: const TextStyle(color: Colors.black87), 
+                  decoration: InputDecoration(
+                    labelText: 'Search Notes',
+                    // This makes the label text visible even before you type
+                    labelStyle: const TextStyle(color: Colors.black54), 
+                    prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.8), 
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) => Provider.of<NotesProvider>(context, listen: false).updateSearchQuery(value),
+                ),
+            ),
+       Expanded(
+              child: Consumer<NotesProvider>(
           builder: (context, notesProvider, child) {
             // Check if notes are empty - you might want to show a loading spinner here if still fetching
             if (notesProvider.notes.isEmpty) {
@@ -71,12 +83,15 @@ class _NotesScreenState extends State<NotesScreen> {
                       onPressed: () {
                         notesProvider.deleteNote(note.noteId);
                       },
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+                        ),
+                      ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
         
         floatingActionButton: FloatingActionButton(
