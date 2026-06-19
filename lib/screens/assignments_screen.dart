@@ -243,28 +243,49 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                     itemCount: filteredAssignments.length,
                     itemBuilder: (context, index) {
                       final assignment = filteredAssignments[index];
+                      
+                      // Assumes you have an isCompleted boolean in your model.
+                      // Defaults to false if it's null.
+                      final bool isCompleted = assignment.status ?? false;
+
                       return Card(
                         color: Colors.white.withOpacity(0.6),
                         elevation: 0,
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         child: ListTile(
+                          // NEW: The Completion Toggle Button on the left
+                          leading: IconButton(
+                            icon: Icon(
+                              isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                              color: isCompleted ? Colors.green : Colors.blueAccent,
+                              size: 28,
+                            ),
+                            onPressed: () async {
+                              await assignmentsProvider.toggleAssignmentStatus(
+                                assignment.assignmentId, 
+                                !isCompleted,
+                              );
+                            },
+                          ),
                           title: Text(
                             assignment.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              // NEW: Changes color and strikes through text if done
+                              color: isCompleted ? Colors.grey : Colors.black87,
+                              decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
                             ),
                           ),
                           subtitle: Text(
                             'Due date: ${DateFormat('dd MMM yyyy').format(assignment.dueDate)}',
-                            style: const TextStyle(color: Colors.black54),
+                            style: TextStyle(color: isCompleted ? Colors.grey : Colors.black54),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                icon: Icon(Icons.edit, color: isCompleted ? Colors.grey : Colors.blueAccent),
                                 onPressed: () => _pickDueDateAndSave(assignment: assignment),
                               ),
                               IconButton(
