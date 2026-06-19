@@ -53,6 +53,7 @@ class AssignmentsProvider with ChangeNotifier {
       final docRef = await assignmentsCollection.add({
         'name': name,
         'dueDate': Timestamp.fromDate(dueDate),
+        'status': false, // NEW: Default to not completed when created
       });
 
       _assignments.add(
@@ -60,6 +61,7 @@ class AssignmentsProvider with ChangeNotifier {
           assignmentId: docRef.id,
           name: name,
           dueDate: dueDate,
+          status: false, // NEW: Add to local model
         ),
       );
       _assignments.sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -88,10 +90,14 @@ class AssignmentsProvider with ChangeNotifier {
       );
 
       if (index != -1) {
+        // We preserve the old status so editing the name doesn't un-check the box
+        final oldStatus = _assignments[index].status ?? false; 
+        
         _assignments[index] = AssignmentModel(
           assignmentId: assignmentId,
           name: name,
           dueDate: dueDate,
+          status: oldStatus, 
         );
         _assignments.sort((a, b) => a.dueDate.compareTo(b.dueDate));
         notifyListeners();
@@ -113,6 +119,36 @@ class AssignmentsProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error deleting assignment: $e');
+    }
+  }
+
+  // NEW METHOD: Toggle Assignment Status for the checkmark button
+  Future<void> toggleAssignmentStatus(String assignmentId, bool newStatus) async {
+    final assignmentsCollection = _assignmentsCollection();
+    if (assignmentsCollection == null) return;
+
+    try {
+      // 1. Update in Firebase
+      await assignmentsCollection.doc(assignmentId).update({
+        'status': newStatus,
+      });
+
+      // 2. Update locally so the UI changes instantly
+      final index = _assignments.indexWhere(
+        (assignment) => assignment.assignmentId == assignmentId,
+      );
+
+      if (index != -1) {
+        _assignments[index] = AssignmentModel(
+          assignmentId: assignmentId,
+          name: _assignments[index].name,
+          dueDate: _assignments[index].dueDate,
+          status: newStatus,
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error toggling status: $e');
     }
   }
 }
