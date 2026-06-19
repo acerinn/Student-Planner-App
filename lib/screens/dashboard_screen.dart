@@ -17,6 +17,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // Used to track transitions to 0 tasks for the popup
+  int? _previousPendingCount;
+
   @override
   void initState() {
     super.initState();
@@ -26,27 +29,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  // The Duolingo-style congratulations popup
+  void _showCongratsPopup() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white.withOpacity(0.95),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Column(
+            children: [
+              Icon(Icons.star, color: Colors.amber, size: 80),
+              SizedBox(height: 12),
+              Text(
+                'Congratulations!',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+            ],
+          ),
+          content: const Text(
+            'You have completed all your pending tasks. Enjoy your free time!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black54),
+          ),
+          actions: [
+            Center(
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(backgroundColor: Colors.blueAccent),
+                child: const Text('Awesome!'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final assignmentsWatch = context.watch<AssignmentsProvider>();
     final timetablesWatch = context.watch<TimetablesProvider>();
     final notesWatch = context.watch<NotesProvider>();
 
-    final today = DateTime.now();
-    final startOfToday = DateTime(today.year, today.month, today.day);
-    final upcomingAssignments = assignmentsWatch.assignments
-        .where((assignment) => !assignment.dueDate.isBefore(startOfToday))
-        .toList()
+    final allAssignments = assignmentsWatch.assignments;
+    final totalAssignments = allAssignments.length;
+
+    // 1. Calculate Completed based on the NEW status boolean
+    final completedCount = allAssignments.where((a) => a.status == true).length;
+
+    // 2. Calculate Pending (unchecked) and sort them by due date
+    final pendingAssignments = allAssignments.where((a) => a.status != true).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    final pendingCount = pendingAssignments.length;
 
-    final dueSoonCount = upcomingAssignments
-        .where((assignment) => assignment.dueDate.difference(startOfToday).inDays <= 7)
-        .length;
+    // Trigger Popup if tasks were > 0 and just hit 0 (ignoring empty databases)
+    if (_previousPendingCount != null && _previousPendingCount! > 0 && pendingCount == 0 && totalAssignments > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showCongratsPopup();
+      });
+    }
+    _previousPendingCount = pendingCount;
 
-    final totalAssignments = assignmentsWatch.assignments.length;
-    final assignmentsDueSoonProgress = totalAssignments == 0
-        ? 0.0
-        : (dueSoonCount / totalAssignments).clamp(0.0, 1.0);
+    // Calculate how many stars to fill (0 to 5)
+    final int filledStars = totalAssignments == 0 
+        ? 0 
+        : ((completedCount / totalAssignments) * 5).round().clamp(0, 5);
 
     return AnimatedBackground(
       child: Scaffold(
@@ -78,6 +126,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(color: Colors.black54),
               ),
               const SizedBox(height: 20),
+              
+              // 1. ASSIGNMENT OVERVIEW (5-Star Tracker)
               Card(
                 elevation: 0,
                 color: Colors.white.withOpacity(0.6),
@@ -88,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Assignment Overview',
+                        'Assignment Progress',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                       const SizedBox(height: 12),
@@ -96,22 +146,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '$dueSoonCount Due In 7 Days',
-                            style: const TextStyle(color: Colors.black87),
+                            '$pendingCount Tasks Pending',
+                            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
                           ),
                           Text(
-                            '$totalAssignments Total',
-                            style: const TextStyle(color: Colors.black87),
+                            '$completedCount / $totalAssignments Done',
+                            style: const TextStyle(color: Colors.black54),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: assignmentsDueSoonProgress,
-                        backgroundColor: Colors.white54,
-                        color: Colors.blueAccent,
-                        minHeight: 10,
-                        borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 16),
+                      // 5-Star Visualizer
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(5, (index) {
+                          return Icon(
+                            index < filledStars ? Icons.star : Icons.star_border,
+                            color: index < filledStars ? Colors.amber : Colors.black26,
+                            size: 40,
+                          );
+                        }),
                       ),
                     ],
                   ),
@@ -119,6 +173,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 24),
 
+              // 2. UPCOMING ASSIGNMENTS (Now only shows Pending tasks!)
+              Text(
+                'Upcoming Assignments',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 0,
+                color: Colors.white.withOpacity(0.6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                child: pendingAssignments.isEmpty
+                    ? const ListTile(
+                        title: Text(
+                          'No pending assignments!',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        subtitle: Text(
+                          'You are all caught up.',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      )
+                    : Column(
+                        children: pendingAssignments.take(3).map((assignment) {
+                          return ListTile(
+                            leading: const Icon(Icons.event_note, color: Colors.blueAccent),
+                            title: Text(
+                              assignment.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                            ),
+                            subtitle: Text(
+                              'Due: ${DateFormat('dd MMM yyyy').format(assignment.dueDate)}',
+                              style: const TextStyle(color: Colors.black54),
+                            ),
+                            onTap: () => context.push('/assignments'),
+                          );
+                        }).toList(),
+                      ),
+              ),
+              const SizedBox(height: 24),
+
+              // 3. TIMETABLE
               Text(
                 'Timetable',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
@@ -194,36 +289,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 24),
 
+              // 4. QUICK OVERVIEW
               Text(
                 'Quick Overview',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
               ),
               const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.4,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSummaryCard(
-                    context,
-                    title: 'Total Assignments',
-                    value: '$totalAssignments',
+                  _buildTitlesOverviewCard(
+                    context: context,
+                    title: 'Pending Tasks',
                     icon: Icons.assignment,
                     color: Colors.orange,
+                    items: pendingAssignments.map((e) => e.name).toList(),
+                    onTap: () => context.push('/assignments'),
                   ),
-                  _buildSummaryCard(
-                    context,
-                    title: 'Total Notes Saved',
-                    value: '${notesWatch.notes.length}',
+                  const SizedBox(width: 12),
+                  _buildTitlesOverviewCard(
+                    context: context,
+                    title: 'Notes',
                     icon: Icons.book,
                     color: Colors.blueAccent,
+                    items: notesWatch.notes.map((e) => e.subject).toList(),
+                    onTap: () => context.push('/notes'),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
+
+              // 5. CORE APPLICATION MODULES
               Text(
                 'Core Application Modules',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
@@ -267,42 +363,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'Upcoming Assignments',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                elevation: 0,
-                color: Colors.white.withOpacity(0.6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                child: upcomingAssignments.isEmpty
-                    ? const ListTile(
-                        title: Text(
-                          'No upcoming assignments',
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                        subtitle: Text(
-                          'Add assignments to see them here.',
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                      )
-                    : Column(
-                        children: upcomingAssignments.take(3).map((assignment) {
-                          return ListTile(
-                            leading: const Icon(Icons.event_note, color: Colors.blueAccent),
-                            title: Text(
-                              assignment.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                            ),
-                            subtitle: Text(
-                              'Due: ${DateFormat('dd MMM yyyy').format(assignment.dueDate)}',
-                              style: const TextStyle(color: Colors.black54),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-              ),
             ],
           ),
         ),
@@ -330,31 +390,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSummaryCard(
-    BuildContext context, {
+  Widget _buildTitlesOverviewCard({
+    required BuildContext context,
     required String title,
-    required String value,
     required IconData icon,
     required Color color,
+    required List<String> items,
+    required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 0,
-      color: Colors.white.withOpacity(0.6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Icon(icon, color: color, size: 28),
-            Text(title, style: const TextStyle(color: Colors.black54, fontSize: 12)),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-              overflow: TextOverflow.ellipsis,
+    return Expanded(
+      child: Card(
+        elevation: 0,
+        color: Colors.white.withOpacity(0.6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(15),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, color: color, size: 24),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (items.isEmpty)
+                  const Text('Nothing here yet.', style: TextStyle(color: Colors.black54, fontSize: 12))
+                else
+                  ...items.take(3).map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.circle, size: 6, color: Colors.black54),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                item,
+                                style: const TextStyle(color: Colors.black87, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
