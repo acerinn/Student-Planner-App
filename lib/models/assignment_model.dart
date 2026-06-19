@@ -4,36 +4,30 @@ class AssignmentModel {
   final String assignmentId;
   final String name;
   final DateTime dueDate;
+  final bool? status; // Add the status boolean
 
   AssignmentModel({
     required this.assignmentId,
     required this.name,
     required this.dueDate,
+    this.status = false, // Defaults to false
   });
+
+  factory AssignmentModel.fromMap(Map<String, dynamic> map, String documentId) {
+    return AssignmentModel(
+      assignmentId: documentId,
+      name: map['name'] ?? '',
+      dueDate: (map['dueDate'] as Timestamp).toDate(),
+      // Adding ?? false ensures old data without a status doesn't crash the app!
+      status: map['status'] ?? false, 
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'dueDate': Timestamp.fromDate(dueDate),
+      'status': status,
     };
-  }
-
-  factory AssignmentModel.fromMap(Map<String, dynamic> map, String documentId) {
-    final dueDateValue = map['dueDate'];
-    DateTime parsedDueDate;
-
-    if (dueDateValue is Timestamp) {
-      parsedDueDate = dueDateValue.toDate();
-    } else if (dueDateValue is String) {
-      parsedDueDate = DateTime.tryParse(dueDateValue) ?? DateTime.now();
-    } else {
-      parsedDueDate = DateTime.now();
-    }
-
-    return AssignmentModel(
-      assignmentId: documentId,
-      name: (map['name'] ?? '').toString(),
-      dueDate: parsedDueDate,
-    );
   }
 }
